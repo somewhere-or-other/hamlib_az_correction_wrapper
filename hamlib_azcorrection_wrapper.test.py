@@ -8,7 +8,6 @@ class TestHamlibAzCorrectionTests(unittest.TestCase):
   def testNegativeToPositive_south(self):
     self.assertEqual(haw.negativeToPositive(-180), 180)
     self.assertEqual(haw.negativeToPositive(180), 180)
-
   
   def testNegativeToPositive_southwest(self):
     self.assertEqual(haw.negativeToPositive(-135), 225)
@@ -31,6 +30,40 @@ class TestHamlibAzCorrectionTests(unittest.TestCase):
 
   def testNegativeToPositive_southeast(self):
     self.assertEqual(haw.negativeToPositive(135), 135)
+
+  def testNegativeToPositive_floating(self):
+    self.assertEqual(haw.negativeToPositive(-134.75), 225.25)
+
+
+
+  def testPositiveToNegative_south(self):
+    self.assertEqual(180, haw.positiveToNegative(-180))
+    self.assertEqual(180, haw.positiveToNegative(180))
+  
+  def testPositiveToNegative_southwest(self):
+    self.assertEqual(225, haw.positiveToNegative(-135))
+
+  def testPositiveToNegative_west(self):
+    self.assertEqual(270, haw.positiveToNegative(-90))
+
+  def testPositiveToNegative_northwest(self):
+    self.assertEqual(315, haw.positiveToNegative(-45))
+    
+  def testPositiveToNegative_north(self):
+    self.assertEqual(0, haw.positiveToNegative(0))
+    #self.assertEqual(0, haw.positiveToNegative(360))
+    
+  def testPositiveToNegative_northeast(self):
+    self.assertEqual(45, haw.positiveToNegative(45))
+
+  def testPositiveToNegative_east(self):
+    self.assertEqual(90, haw.positiveToNegative(90))
+
+  def testPositiveToNegative_southeast(self):
+    self.assertEqual(135, haw.positiveToNegative(135))
+
+  def testPositiveToNegative_floating(self):
+    self.assertEqual(225.25, haw.negativeToPositive(-134.75))
 
 
     

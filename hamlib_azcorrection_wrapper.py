@@ -20,6 +20,12 @@ def negativeToPositive(inputAzimuth):
   else:
     return inputAzimuth%360
 
+def positiveToNegative(inputAzimuth):
+  if(inputAzimuth > 180):
+    return (inputAzimuth%360)-360
+  else:
+    return inputAzimuth%360
+
 if __name__ == "__main__":
     HOST, PORT = "localhost", 9999
 
