@@ -14,6 +14,12 @@ class MyTCPHandler(SocketServer.StreamRequestHandler):
         # to the client
         self.wfile.write(self.data.upper())
 
+def negativeToPositive(inputAzimuth):
+  if(inputAzimuth < 0):
+    return (inputAzimuth+360)%360
+  else:
+    return inputAzimuth
+
 if __name__ == "__main__":
     HOST, PORT = "localhost", 9999
 
@@ -23,5 +29,4 @@ if __name__ == "__main__":
     # Activate the server; this will keep running until you
     # interrupt the program with Ctrl-C
     server.serve_forever()
-
 
