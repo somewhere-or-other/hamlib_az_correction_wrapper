@@ -18,7 +18,7 @@ def negativeToPositive(inputAzimuth):
   if(inputAzimuth < 0):
     return (inputAzimuth+360)%360
   else:
-    return inputAzimuth
+    return inputAzimuth%360
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 9999
