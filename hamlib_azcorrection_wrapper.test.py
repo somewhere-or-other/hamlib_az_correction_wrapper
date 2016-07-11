@@ -66,6 +66,57 @@ class TestHamlibAzCorrectionTests(unittest.TestCase):
     self.assertEqual(225.25, haw.negativeToPositive(-134.75))
 
 
+
+
+  def testExtractAzEl_NoInput(self):
+    self.assertRaises(ValueError, haw.extractAzEl)
+
+  def testExtractAzEl_SingleLineString_Integer(self):
+    self.assertEqual(haw.extractAzEl("P 100 200"), {'az':100.0, 'el':200.0})
+
+  def testExtractAzEl_SingleLineString_Float(self):
+    self.assertEqual(haw.extractAzEl("P 102.5 203.7"), {'az':102.5, 'el':203.7})
+
+  def testExtractAzEl_MultiLineString_Integer(self):
+    inputString = """P
+100
+200
+"""
+     
+    self.assertEqual(haw.extractAzEl(inputString), {'az':100.0, 'el':200.0})
+
+  def testExtractAzEl_MultiLineString_Float(self):
+    inputString = """P
+102.5
+203.7
+"""
+    self.assertEqual(haw.extractAzEl(inputString), {'az':102.5, 'el':203.7})
+  
+  
+  def testExtractAzEl_SingleLineString_Integer_NegativeAz(self):
+    self.assertEqual(haw.extractAzEl("P -100 200"), {'az':-100.0, 'el':200.0})
+
+  def testExtractAzEl_SingleLineString_Float_NegativeAz(self):
+    self.assertEqual(haw.extractAzEl("P -102.5 203.7"), {'az':-102.5, 'el':203.7})
+
+  def testExtractAzEl_MultiLineString_Integer_NegativeAz(self):
+    inputString = """P
+-100
+200
+"""
+     
+    self.assertEqual(haw.extractAzEl(inputString), {'az':-100.0, 'el':200.0})
+
+  def testExtractAzEl_MultiLineString_Float_NegativeAz(self):
+    inputString = """P
+-102.5
+203.7
+"""
+    self.assertEqual(haw.extractAzEl(inputString), {'az':-102.5, 'el':203.7})
+  
+  
+
+
     
 if __name__ == '__main__':
     unittest.main()
