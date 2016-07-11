@@ -26,6 +26,18 @@ def positiveToNegative(inputAzimuth):
   else:
     return inputAzimuth%360
 
+def extractAzEl(inputString = None):
+  if inputString == None:
+    raise ValueError
+  elif '__iter__' in dir(inputString):
+    #TODO: handle array of strings
+    pass
+  else:
+    #TODO: handle single string
+    pass
+  
+  
+
 if __name__ == "__main__":
     HOST, PORT = "localhost", 9999
 
