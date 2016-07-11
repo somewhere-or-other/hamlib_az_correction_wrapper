@@ -79,17 +79,17 @@ class TestHamlibAzCorrectionTests(unittest.TestCase):
 
     def testExtractAzEl_MultiLineString_Integer(self):
         inputString = """P
-    100
-    200
-    """
-        
+                        100
+                        200
+                        """
+            
         self.assertEqual(haw.extractAzEl(inputString), {'az':100.0, 'el':200.0})
 
     def testExtractAzEl_MultiLineString_Float(self):
         inputString = """P
-    102.5
-    203.7
-    """
+                        102.5
+                        203.7
+                        """
         self.assertEqual(haw.extractAzEl(inputString), {'az':102.5, 'el':203.7})
 
 
@@ -101,17 +101,17 @@ class TestHamlibAzCorrectionTests(unittest.TestCase):
 
     def testExtractAzEl_MultiLineString_Integer_NegativeAz(self):
         inputString = """P
-    -100
-    200
-    """
-        
+                        -100
+                        200
+                        """
+                            
         self.assertEqual(haw.extractAzEl(inputString), {'az':-100.0, 'el':200.0})
 
     def testExtractAzEl_MultiLineString_Float_NegativeAz(self):
         inputString = """P
-    -102.5
-    203.7
-    """
+                        -102.5
+                        203.7
+                        """
         self.assertEqual(haw.extractAzEl(inputString), {'az':-102.5, 'el':203.7})
 
 
