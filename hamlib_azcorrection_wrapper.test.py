@@ -71,6 +71,9 @@ class TestHamlibAzCorrectionTests(unittest.TestCase):
     def testExtractAzEl_NoInput(self):
         self.assertRaises(ValueError, haw.extractAzEl)
 
+    def testExtractAzEl_BadInput_SingleString(self):
+        self.assertRaises(ValueError, haw.extractAzEl, "junk that won't actually parse")
+
     def testExtractAzEl_SingleLineString_Integer(self):
         self.assertEqual(haw.extractAzEl("P 100 200"), {'az':100.0, 'el':200.0})
 
@@ -112,6 +115,32 @@ class TestHamlibAzCorrectionTests(unittest.TestCase):
                         -102.5
                         203.7
                         """
+        self.assertEqual(haw.extractAzEl(inputString), {'az':-102.5, 'el':203.7})
+
+
+    
+
+
+
+
+
+    def testExtractAzEl_MultiString_Float(self):
+        inputString = ["P ",
+                        "102.5",
+                        "203.7"]
+        self.assertEqual(haw.extractAzEl(inputString), {'az':102.5, 'el':203.7})
+
+    def testExtractAzEl_MultiString_Integer_NegativeAz(self):
+        inputString = ["P ",
+                        "-100",
+                        "200"]
+                            
+        self.assertEqual(haw.extractAzEl(inputString), {'az':-100.0, 'el':200.0})
+
+    def testExtractAzEl_MultiString_Float_NegativeAz(self):
+        inputString = ["P ",
+                        "-102.5",
+                        "203.7"]
         self.assertEqual(haw.extractAzEl(inputString), {'az':-102.5, 'el':203.7})
 
 

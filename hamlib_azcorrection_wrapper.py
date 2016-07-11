@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 
 import SocketServer
+import re
+
+extractAzEl_re = re.compile(r'^\s*[Pp]\s+([-.\d]+)\s+([-.\d]+)\s*$')
+
 
 class MyTCPHandler(SocketServer.StreamRequestHandler):
 
@@ -30,11 +34,18 @@ def extractAzEl(inputString = None):
   if inputString == None:
     raise ValueError
   elif '__iter__' in dir(inputString):
-    #TODO: handle array of strings
-    pass
+    #if a list of strings:
+    #convert to equivalent single string
+    oldInputString = inputString
+    
+    inputString = "\n".join(oldInputString)
+
+  #handle single string, including multi-line strings
+  thismatch = extractAzEl_re.match(inputString)
+  if thismatch == None:
+      raise ValueError
   else:
-    #TODO: handle single string
-    pass
+      return {'az': float(thismatch.groups()[0]), 'el': float(thismatch.groups()[1])}
   
   
 
