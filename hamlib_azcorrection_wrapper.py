@@ -2,6 +2,7 @@
 
 import SocketServer
 import re
+import pprint
 
 extractAzEl_re = re.compile(r'^\s*[Pp]\s+([-.\d]+)\s+([-.\d]+)\s*$')
 
@@ -9,14 +10,21 @@ extractAzEl_re = re.compile(r'^\s*[Pp]\s+([-.\d]+)\s+([-.\d]+)\s*$')
 class MyTCPHandler(SocketServer.StreamRequestHandler):
 
         def handle(self):
-                # self.rfile is a file-like object created by the handler;
-                # we can now use e.g. readline() instead of raw recv() calls
-                self.data = self.rfile.readline().strip()
-                print "{} wrote:".format(self.client_address[0])
-                print self.data
-                # Likewise, self.wfile is a file-like object used to write back
-                # to the client
-                self.wfile.write(self.data.upper())
+            pprint.pprint(dir(self))
+            pprint.pprint(dir(self.server))
+            pprint.pprint(dir(self.server.socket))
+            
+            while (True):
+                #try:
+                    # self.rfile is a file-like object created by the handler;
+                    # we can now use e.g. readline() instead of raw recv() calls
+                    self.data = self.rfile.readline().strip()
+                    print "{} wrote:".format(self.client_address[0])
+                    print self.data
+                    # Likewise, self.wfile is a file-like object used to write back
+                    # to the client
+                    self.wfile.write(self.data)
+
 
 def negativeToPositive(inputAzimuth):
         if(inputAzimuth < 0):
@@ -57,5 +65,7 @@ if __name__ == "__main__":
 
         # Activate the server; this will keep running until you
         # interrupt the program with Ctrl-C
-        server.serve_forever()
+        #server.serve_forever()
+        
+        server.handle_request()
 
