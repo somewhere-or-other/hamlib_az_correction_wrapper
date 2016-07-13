@@ -7,49 +7,57 @@ import time
 import sys
 import pprint
 
-extractAzEl_re = re.compile(r'^\s*[Pp]\s+([-.\d]+)\s+([-.\d]+)\s*$')
 
+#much of the socket code based on http://www.bortzmeyer.org/files/echoserver.py, as of 13 July 2016
+
+extractAzEl_re = re.compile(r'^\s*([Pp])\s+([-.\d]+)\s+([-.\d]+)\s*$')
+match_re = re.compile(r'^\s*[Pp]')
 
 def current_time():
     return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
 
-# StreamRequestHandler provides us with the rfile and wfile attributes
-class EchoHandler(SocketServer.StreamRequestHandler):
+class MyTCPHandler(SocketServer.StreamRequestHandler):
 
-    def log(self, peer, size):
+    def log(self, peer, msg):
         mapped = re.compile("^::ffff:", re.IGNORECASE)
         peer = re.sub(mapped, "", peer) # Clean IPv4-mapped addresses because I find
         # them confusing.
-        sys.stdout.write("%s - %s - %i bytes\n" % (current_time(),
-                                                   peer, size))
+        sys.stdout.write("%s - %s - %s\n" % (current_time(),
+                                                   peer, msg))
                                  
     def handle(self):
-        """ Echoes (sends back) whatever it reads """
-        # Warning, the Python read() is not the same as the C
-        # read(). It operates on file objects, not sockets and has
-        # different semantics.
-        #
-        # Just using read() will block until the TCP connection is
-        # closed. We do not know the size in advance, hence the loop
-        # with a size of 1. Now, you understand why HTTP has
-        # Content-Length and why EPP-over-TCP prepends the length of
-        # the XML element...
-        #
-        # Another solution would be to use self.request (the socket)
-        # and to call recv(1024) and send() on it. Tests show that it
-        # is *much* slower (twenty times slower on a local Ethernet).
-        #
+
         data = "DUMMY"
         size = 0
         peer = self.client_address[0]
         while data != "":
-            data = self.rfile.read(1)
-            try:
-                self.wfile.write(data)
-                size = size + len(data)
-            except socket.error: # Client went away, do not take that data into account
-                data = ""
-        self.log(peer, size)
+            #data = self.rfile.read(1)
+            data = self.rfile.readline()
+            self.log(peer, "Read line: %s" % data)
+                        
+            try: #try to parse data
+                position = extractAzEl(data)
+                try:
+                    self.log(peer, "Extracted data: az: %f, el: %f" % (position['az'], position['el']))
+                    if position['az'] < 0:
+                        position['az'] = negativeToPositive(position['az'])
+                    data_mod = assembleFromExtracted(position)
+                    self.wfile.write(data_mod)
+                    self.log(peer, "Wrote line: %s" % data_mod)
+                    size = size + len(data_mod)
+                except socket.error: # Client went away, do not take that data into account
+                    data = ""
+
+            except ValueError:#data didn't match
+                try:
+                    self.wfile.write(data)
+                    self.log(peer, "Wrote line: %s" % data)
+                    size = size + len(data)
+                except socket.error: # Client went away, do not take that data into account
+                    data = ""
+                
+            
+        self.log(peer, "%i bytes" % size)
 
 
 def negativeToPositive(inputAzimuth):
@@ -63,6 +71,9 @@ def positiveToNegative(inputAzimuth):
                 return (inputAzimuth%360)-360
         else:
                 return inputAzimuth%360
+            
+def assembleFromExtracted(extractedData):
+    return "%s %f %f" % (extractedData['cmd'], extractedData['az'], extractedData['el'])
 
 def extractAzEl(inputString = None):
         if inputString == None:
@@ -79,7 +90,7 @@ def extractAzEl(inputString = None):
         if thismatch == None:
                         raise ValueError
         else:
-                        return {'az': float(thismatch.groups()[0]), 'el': float(thismatch.groups()[1])}
+                        return {'cmd':thismatch.groups()[0], 'az': float(thismatch.groups()[1]), 'el': float(thismatch.groups()[2])}
         
         
 
@@ -89,15 +100,8 @@ if __name__ == "__main__":
 
 
         SocketServer.ThreadingTCPServer.allow_reuse_address = True
-        # SocketServer should transparently accept IPv6 connections. But
-        # it does not. So, we tell it. Note that using socket.AF_INET6
-        # allows to receive *both* IPv4 and IPv6 (and, no, we cannot use
-        # socket.AF_UNSPEC, it raises an exception :-( ), thanks to the
-        # socket.IPV6_V6ONLY that we use in server_bind.
-        
-        # See the very detailed study
-        # <https://edms.cern.ch/document/971407>
+
         SocketServer.ThreadingTCPServer.address_family = socket.AF_INET
-        server = SocketServer.ThreadingTCPServer((HOST, PORT), EchoHandler)
+        server = SocketServer.ThreadingTCPServer((HOST, PORT), MyTCPHandler)
         server.serve_forever()
     
