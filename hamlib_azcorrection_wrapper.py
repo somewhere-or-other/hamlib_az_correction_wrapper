@@ -2,28 +2,54 @@
 
 import SocketServer
 import re
+import socket
+import time
+import sys
 import pprint
 
 extractAzEl_re = re.compile(r'^\s*[Pp]\s+([-.\d]+)\s+([-.\d]+)\s*$')
 
 
-class MyTCPHandler(SocketServer.StreamRequestHandler):
+def current_time():
+    return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
 
-        def handle(self):
-            pprint.pprint(dir(self))
-            pprint.pprint(dir(self.server))
-            pprint.pprint(dir(self.server.socket))
-            
-            while (True):
-                #try:
-                    # self.rfile is a file-like object created by the handler;
-                    # we can now use e.g. readline() instead of raw recv() calls
-                    self.data = self.rfile.readline().strip()
-                    print "{} wrote:".format(self.client_address[0])
-                    print self.data
-                    # Likewise, self.wfile is a file-like object used to write back
-                    # to the client
-                    self.wfile.write(self.data)
+# StreamRequestHandler provides us with the rfile and wfile attributes
+class EchoHandler(SocketServer.StreamRequestHandler):
+
+    def log(self, peer, size):
+        mapped = re.compile("^::ffff:", re.IGNORECASE)
+        peer = re.sub(mapped, "", peer) # Clean IPv4-mapped addresses because I find
+        # them confusing.
+        sys.stdout.write("%s - %s - %i bytes\n" % (current_time(),
+                                                   peer, size))
+                                 
+    def handle(self):
+        """ Echoes (sends back) whatever it reads """
+        # Warning, the Python read() is not the same as the C
+        # read(). It operates on file objects, not sockets and has
+        # different semantics.
+        #
+        # Just using read() will block until the TCP connection is
+        # closed. We do not know the size in advance, hence the loop
+        # with a size of 1. Now, you understand why HTTP has
+        # Content-Length and why EPP-over-TCP prepends the length of
+        # the XML element...
+        #
+        # Another solution would be to use self.request (the socket)
+        # and to call recv(1024) and send() on it. Tests show that it
+        # is *much* slower (twenty times slower on a local Ethernet).
+        #
+        data = "DUMMY"
+        size = 0
+        peer = self.client_address[0]
+        while data != "":
+            data = self.rfile.read(1)
+            try:
+                self.wfile.write(data)
+                size = size + len(data)
+            except socket.error: # Client went away, do not take that data into account
+                data = ""
+        self.log(peer, size)
 
 
 def negativeToPositive(inputAzimuth):
@@ -60,12 +86,18 @@ def extractAzEl(inputString = None):
 if __name__ == "__main__":
         HOST, PORT = "localhost", 9999
 
-        # Create the server, binding to localhost on port 9999
-        server = SocketServer.TCPServer((HOST, PORT), MyTCPHandler)
 
-        # Activate the server; this will keep running until you
-        # interrupt the program with Ctrl-C
-        #server.serve_forever()
+
+        SocketServer.ThreadingTCPServer.allow_reuse_address = True
+        # SocketServer should transparently accept IPv6 connections. But
+        # it does not. So, we tell it. Note that using socket.AF_INET6
+        # allows to receive *both* IPv4 and IPv6 (and, no, we cannot use
+        # socket.AF_UNSPEC, it raises an exception :-( ), thanks to the
+        # socket.IPV6_V6ONLY that we use in server_bind.
         
-        server.handle_request()
-
+        # See the very detailed study
+        # <https://edms.cern.ch/document/971407>
+        SocketServer.ThreadingTCPServer.address_family = socket.AF_INET
+        server = SocketServer.ThreadingTCPServer((HOST, PORT), EchoHandler)
+        server.serve_forever()
+    
