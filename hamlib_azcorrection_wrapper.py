@@ -8,7 +8,7 @@ import sys
 import pprint
 
 
-#much of the socket code based on http://www.bortzmeyer.org/files/echoserver.py, as of 13 July 2016
+#much of the server socket code based on http://www.bortzmeyer.org/files/echoserver.py, as of 13 July 2016
 
 extractAzEl_re = re.compile(r'^\s*([Pp])\s+([-.\d]+)\s+([-.\d]+)\s*$')
 match_re = re.compile(r'^\s*[Pp]')
@@ -112,24 +112,29 @@ def getHamlibCurrentPosition(socket, socket_fh=None):
 
 if __name__ == "__main__":
 
-        hamlib_socket = getHamlibSocket()
-        hamlib_socket_fh = hamlib_socket.makefile()
-        
-        #seek to -90/+270 azimuth, with 30 deg elevation
-        hamlib_socket.sendall(assembleFromExtracted({'cmd':'P','az':positiveToNegative(270),'el':30}) + "\n")
-        received = hamlib_socket_fh.readline()
-        print "Debugging: received: %s" % received
+        try:
+            hamlib_socket = getHamlibSocket()
+            hamlib_socket_fh = hamlib_socket.makefile()
+            
+            ##seek to -90/+270 azimuth, with 30 deg elevation
+            #hamlib_socket.sendall(assembleFromExtracted({'cmd':'P','az':positiveToNegative(270),'el':30}) + "\n")
+            #received = hamlib_socket_fh.readline()
 
-        for i in range(1,10):
-            pprint.pprint(getHamlibCurrentPosition(hamlib_socket))
-            time.sleep(2)
+            #for i in range(1,10):
+                #pprint.pprint(getHamlibCurrentPosition(hamlib_socket, hamlib_socket_fh))
+                #time.sleep(2)
+                
+        except socket.error:
+            print "Unable to connect to hamlib rotctl.  Is it running?"
+            exit(-1)
 
 
-        #HOST, PORT = "localhost", 9999
+        #now start server for something else to see
 
-        #SocketServer.ThreadingTCPServer.allow_reuse_address = True
+        HOST, PORT = "localhost", 9999
 
-        #SocketServer.ThreadingTCPServer.address_family = socket.AF_INET
-        #server = SocketServer.ThreadingTCPServer((HOST, PORT), MyTCPHandler)
-        #server.serve_forever()
-        
+        SocketServer.ThreadingTCPServer.allow_reuse_address = True
+
+        SocketServer.ThreadingTCPServer.address_family = socket.AF_INET
+        server = SocketServer.ThreadingTCPServer((HOST, PORT), MyTCPHandler)
+        server.serve_forever()
