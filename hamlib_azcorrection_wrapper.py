@@ -92,16 +92,44 @@ def extractAzEl(inputString = None):
         else:
                         return {'cmd':thismatch.groups()[0], 'az': float(thismatch.groups()[1]), 'el': float(thismatch.groups()[2])}
         
-        
+
+def getHamlibSocket(hostname="localhost", port=4533):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((hostname, port))
+    #sock.setblocking(0)
+    return sock
+
+def getHamlibCurrentPosition(socket, socket_fh=None):
+    if socket_fh == None:
+        socket_fh = socket.makefile()
+    
+    socket.sendall("p\n")
+    retval = {'cmd': 'p'}
+    retval['az'] = socket_fh.readline()
+    retval['el'] = socket_fh.readline()
+
+    return retval
 
 if __name__ == "__main__":
-        HOST, PORT = "localhost", 9999
+
+        hamlib_socket = getHamlibSocket()
+        hamlib_socket_fh = hamlib_socket.makefile()
+        
+        #seek to -90/+270 azimuth, with 30 deg elevation
+        hamlib_socket.sendall(assembleFromExtracted({'cmd':'P','az':positiveToNegative(270),'el':30}) + "\n")
+        received = hamlib_socket_fh.readline()
+        print "Debugging: received: %s" % received
+
+        for i in range(1,10):
+            pprint.pprint(getHamlibCurrentPosition(hamlib_socket))
+            time.sleep(2)
 
 
+        #HOST, PORT = "localhost", 9999
 
-        SocketServer.ThreadingTCPServer.allow_reuse_address = True
+        #SocketServer.ThreadingTCPServer.allow_reuse_address = True
 
-        SocketServer.ThreadingTCPServer.address_family = socket.AF_INET
-        server = SocketServer.ThreadingTCPServer((HOST, PORT), MyTCPHandler)
-        server.serve_forever()
-    
+        #SocketServer.ThreadingTCPServer.address_family = socket.AF_INET
+        #server = SocketServer.ThreadingTCPServer((HOST, PORT), MyTCPHandler)
+        #server.serve_forever()
+        
